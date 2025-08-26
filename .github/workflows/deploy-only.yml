@@ -1,0 +1,54 @@
+name: Deploy to WordPress (Widget Only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip build process (use existing dist)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Download latest release
+      if: inputs.skip_build == 'true'
+      run: |
+        mkdir -p dist
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+        curl -L -o dist/minecraft-craft-widget.min.js \
+          "https://github.com/${{ github.repository }}/releases/download/${LATEST_RELEASE}/minecraft-craft-widget.min.js"
+    
+    - name: Deploy to WordPress
+      env:
+        WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+        WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+        WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+        WORDPRESS_MEDIA_FOLDER: ${{ secrets.WORDPRESS_MEDIA_FOLDER }}
+      run: |
+        npm install
+        node scripts/deploy-to-wordpress.js
+    
+    - name: Update WordPress Post
+      if: success()
+      env:
+        WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+        WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+        WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+        WORDPRESS_POST_ID: ${{ secrets.WORDPRESS_POST_ID }}
+      run: |
+        if [ ! -z "$WORDPRESS_POST_ID" ]; then
+          echo "Updating WordPress post with new widget version..."
+          # This would update a specific post with the new embed code
+          # You can customize this based on your needs
+        fi

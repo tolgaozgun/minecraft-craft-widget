@@ -1,0 +1,79 @@
+name: Build and Deploy to WordPress
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Cache Minecraft JARs
+      uses: actions/cache@v3
+      with:
+        path: .cache/jars
+        key: ${{ runner.os }}-minecraft-jars-${{ hashFiles('cli/versions.json') }}
+        restore-keys: |
+          ${{ runner.os }}-minecraft-jars-
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build widget
+      run: |
+        npm run fetch-jars
+        npm run extract-assets
+        npm run build-data
+        npm run build-icons
+        npm run pack-data
+        npm run build-widget
+    
+    - name: Upload widget artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: minecraft-widget
+        path: |
+          dist/minecraft-craft-widget.min.js
+          out/icons/**/*.png
+    
+    - name: Deploy to WordPress
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      env:
+        WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+        WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+        WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+        WORDPRESS_MEDIA_FOLDER: ${{ secrets.WORDPRESS_MEDIA_FOLDER }}
+      run: |
+        node scripts/deploy-to-wordpress.js
+    
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Build ${{ github.run_number }}
+        files: |
+          dist/minecraft-craft-widget.min.js
+          dist/embed-snippet.html
+        body: |
+          Automated build and deployment to WordPress.
+          
+          ## Embed Code
+          ```html
+          <div id="mc-craft"></div>
+          <script src="${{ secrets.WORDPRESS_URL }}/wp-content/uploads/${{ secrets.WORDPRESS_MEDIA_FOLDER }}/minecraft-craft-widget.min.js"></script>
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
