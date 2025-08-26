@@ -21,7 +21,7 @@ jobs:
         cache: 'npm'
     
     - name: Cache Minecraft JARs
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .cache/jars
         key: ${{ runner.os }}-minecraft-jars-${{ hashFiles('cli/versions.json') }}
@@ -41,7 +41,7 @@ jobs:
         npm run build-widget
     
     - name: Upload widget artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: minecraft-widget
         path: |
