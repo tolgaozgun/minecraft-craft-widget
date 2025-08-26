@@ -1,18 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import MinecraftCraftWidget from './MinecraftCraftWidget';
-import cssText from './styles.css';
+import MinecraftCraftWidget from './MinecraftCraftWidget.jsx';
+import './styles.css';
 
 // Self-initializing widget
 (function() {
-  // Inject styles
-  const styleId = 'minecraft-craft-widget-styles';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = cssText;
-    document.head.appendChild(style);
-  }
   
   // Get packed data
   const packedData = typeof __PACKED_DATA__ !== 'undefined' ? 

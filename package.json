@@ -32,6 +32,8 @@
   },
   "homepage": "https://github.com/tolgaozgun/minecraft-craft-widget#readme",
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "sharp": "^0.33.2"
   },
   "devDependencies": {

@@ -470,7 +470,7 @@ async function main() {
   
   // Build reverse index (uses)
   const uses = {};
-  recipeMap.values().forEach(recipe => {
+  Array.from(recipeMap.values()).forEach(recipe => {
     const addUse = (itemId) => {
       if (!uses[itemId]) uses[itemId] = [];
       if (recipe.result && recipe.result.item) {

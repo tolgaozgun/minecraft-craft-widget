@@ -168,7 +168,9 @@ async function main() {
   
   // Process each item
   for (const item of data.items) {
-    const outputPath = path.join(ICONS_DIR, item.icon);
+    // Remove the 'icons/' prefix from item.icon
+    const iconPath = item.icon.replace('icons/', '');
+    const outputPath = path.join(ICONS_DIR, iconPath);
     
     // Skip if icon already exists
     if (fs.existsSync(outputPath)) {

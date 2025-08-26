@@ -1,17 +1,17 @@
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import babel from '@rollup/plugin-babel';
-import replace from '@rollup/plugin-replace';
-import { terser } from '@rollup/plugin-terser';
-import postcss from 'rollup-plugin-postcss';
-import fs from 'fs';
-import path from 'path';
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
+const commonjs = require('@rollup/plugin-commonjs');
+const babel = require('@rollup/plugin-babel');
+const replace = require('@rollup/plugin-replace');
+const terser = require('@rollup/plugin-terser').default;
+const postcss = require('rollup-plugin-postcss');
+const fs = require('fs');
+const path = require('path');
 
 // Load the packed data
 const dataPath = path.join(__dirname, 'out/data.min.json');
 const packedData = fs.existsSync(dataPath) ? fs.readFileSync(dataPath, 'utf8') : '{}';
 
-export default {
+module.exports = {
   input: 'src/index.js',
   output: {
     file: 'dist/minecraft-craft-widget.min.js',
@@ -27,13 +27,20 @@ export default {
     }),
     postcss({
       extract: false,
-      inject: false,
+      inject: (cssVariableName) => 
+        `if (!document.getElementById('minecraft-craft-widget-styles')) {
+          const style = document.createElement('style');
+          style.id = 'minecraft-craft-widget-styles';
+          style.textContent = ${cssVariableName};
+          document.head.appendChild(style);
+        }`,
       minimize: true,
       modules: false
     }),
     nodeResolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
+      extensions: ['.js', '.jsx']
     }),
     commonjs(),
     babel({
@@ -46,7 +53,8 @@ export default {
         }],
         '@babel/preset-react'
       ],
-      exclude: 'node_modules/**'
+      exclude: 'node_modules/**',
+      extensions: ['.js', '.jsx']
     }),
     terser({
       compress: {
