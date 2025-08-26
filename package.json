@@ -1,0 +1,51 @@
+{
+  "name": "minecraft-craft-widget",
+  "version": "1.0.0",
+  "description": "Embeddable Minecraft crafting recipe widget for WordPress",
+  "main": "dist/minecraft-craft-widget.min.js",
+  "scripts": {
+    "fetch-jars": "node cli/fetch-jars.js",
+    "extract-assets": "node cli/extract-assets.js",
+    "build-data": "node cli/build-data.js",
+    "build-icons": "node cli/build-icons.js",
+    "pack-data": "node cli/pack-data.js",
+    "build-widget": "node cli/build-widget.js",
+    "build": "npm run fetch-jars && npm run extract-assets && npm run build-data && npm run build-icons && npm run pack-data && npm run build-widget",
+    "build:widget-only": "npm run build-widget",
+    "clean": "rm -rf .cache out dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tolgaozgun/minecraft-craft-widget.git"
+  },
+  "keywords": [
+    "minecraft",
+    "crafting",
+    "recipes",
+    "widget",
+    "wordpress"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tolgaozgun/minecraft-craft-widget/issues"
+  },
+  "homepage": "https://github.com/tolgaozgun/minecraft-craft-widget#readme",
+  "dependencies": {
+    "sharp": "^0.33.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.7",
+    "@babel/preset-env": "^7.23.7",
+    "@babel/preset-react": "^7.23.3",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "adm-zip": "^0.5.10",
+    "axios": "^1.6.5",
+    "rollup": "^4.9.4",
+    "rollup-plugin-postcss": "^4.0.2"
+  }
+}
