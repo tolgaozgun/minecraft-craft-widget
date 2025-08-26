@@ -48,6 +48,10 @@ jobs:
           dist/minecraft-craft-widget.min.js
           out/icons/**/*.png
     
+    - name: Create Plugin Package
+      run: |
+        node scripts/create-plugin-zip.js
+    
     - name: Deploy to WordPress
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       env:
@@ -56,7 +60,19 @@ jobs:
         WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
         WORDPRESS_MEDIA_FOLDER: ${{ secrets.WORDPRESS_MEDIA_FOLDER }}
       run: |
-        node scripts/deploy-to-wordpress.js
+        echo "Note: Direct JS upload may be blocked by WordPress."
+        echo "The widget has been packaged as a plugin instead."
+        echo ""
+        echo "Plugin file created: dist/minecraft-craft-widget-plugin.zip"
+        echo ""
+        echo "To use the widget:"
+        echo "1. Download the plugin from GitHub releases"
+        echo "2. Upload to WordPress: Plugins → Add New → Upload"
+        echo "3. Activate the plugin"
+        echo "4. Use shortcode: [minecraft_widget]"
+        
+        # Try deployment anyway, but don't fail if it doesn't work
+        node scripts/deploy-to-wordpress.js || true
     
     - name: Create Release
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -66,14 +82,25 @@ jobs:
         name: Build ${{ github.run_number }}
         files: |
           dist/minecraft-craft-widget.min.js
+          dist/minecraft-craft-widget-plugin.zip
           dist/embed-snippet.html
         body: |
-          Automated build and deployment to WordPress.
+          Automated build of Minecraft Craft Widget.
           
-          ## Embed Code
+          ## Installation Options
+          
+          ### Option 1: WordPress Plugin (Recommended)
+          1. Download `minecraft-craft-widget-plugin.zip`
+          2. Upload via WordPress Admin → Plugins → Add New → Upload
+          3. Activate the plugin
+          4. Use shortcode: `[minecraft_widget]`
+          
+          ### Option 2: Direct Embed
           ```html
           <div id="mc-craft"></div>
-          <script src="${{ secrets.WORDPRESS_URL }}/wp-content/uploads/${{ secrets.WORDPRESS_MEDIA_FOLDER }}/minecraft-craft-widget.min.js"></script>
+          <script src="/path/to/minecraft-craft-widget.min.js"></script>
           ```
+          
+          Note: Some WordPress installations block .js uploads. Use the plugin method if direct upload fails.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
