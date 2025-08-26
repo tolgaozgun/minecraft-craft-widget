@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Minecraft Widget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #mc-craft {
+      min-height: 600px;
+      border: 1px solid #ccc;
+      padding: 20px;
+    }
+    .debug {
+      margin: 20px 0;
+      padding: 10px;
+      background: #f0f0f0;
+      border: 1px solid #999;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minecraft Craft Widget Test</h1>
+  
+  <div class="debug" id="debug-info">
+    Loading widget...
+  </div>
+  
+  <div id="mc-craft"></div>
+  
+  <script>
+    // Debug function
+    function debug(msg) {
+      document.getElementById('debug-info').innerHTML += '<br>' + msg;
+    }
+    
+    // Check if widget loads
+    window.addEventListener('load', function() {
+      debug('Page loaded');
+      
+      // Check for widget
+      setTimeout(function() {
+        if (window.MinecraftCraftWidget) {
+          debug('✓ MinecraftCraftWidget found');
+          debug('Initializing with custom icon URL...');
+          
+          // Initialize with WordPress URL
+          window.MinecraftCraftWidget.init('mc-craft', {
+            iconBaseUrl: 'https://minecraftdunyasi.com/wp-content/uploads/minecraft-craft-widget/'
+          });
+        } else {
+          debug('✗ MinecraftCraftWidget not found');
+        }
+        
+        // Check container
+        const container = document.getElementById('mc-craft');
+        if (container.children.length > 0) {
+          debug('✓ Widget rendered with ' + container.children.length + ' children');
+        } else {
+          debug('✗ Widget container is empty');
+        }
+      }, 1000);
+    });
+  </script>
+  
+  <!-- Try different URLs -->
+  
+  <!-- Option 1: Direct from GitHub release -->
+  <script src="https://github.com/tolgaozgun/minecraft-craft-widget/releases/download/v5/minecraft-craft-widget.min.js"></script>
+  
+  <!-- Option 2: From WordPress (if uploaded) -->
+  <!-- <script src="https://minecraftdunyasi.com/wp-content/uploads/minecraft-craft-widget/minecraft-craft-widget.min.js"></script> -->
+  
+  <!-- Option 3: Local file for testing -->
+  <!-- <script src="dist/minecraft-craft-widget.min.js"></script> -->
+</body>
+</html>

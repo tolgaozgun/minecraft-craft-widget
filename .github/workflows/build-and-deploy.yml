@@ -64,19 +64,19 @@ jobs:
         WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
         WORDPRESS_MEDIA_FOLDER: ${{ secrets.WORDPRESS_MEDIA_FOLDER }}
       run: |
-        echo "Note: Direct JS upload may be blocked by WordPress."
-        echo "The widget has been packaged as a plugin instead."
-        echo ""
-        echo "Plugin file created: dist/minecraft-craft-widget-plugin.zip"
-        echo ""
-        echo "To use the widget:"
-        echo "1. Download the plugin from GitHub releases"
-        echo "2. Upload to WordPress: Plugins → Add New → Upload"
-        echo "3. Activate the plugin"
-        echo "4. Use shortcode: [minecraft_widget]"
+        echo "Deploying to WordPress..."
         
-        # Try deployment anyway, but don't fail if it doesn't work
+        # Try to deploy widget and icons
         node scripts/deploy-to-wordpress.js || true
+        
+        # Also try to upload the plugin
+        echo ""
+        echo "Attempting to upload plugin..."
+        npm install form-data
+        node scripts/deploy-plugin.js || true
+        
+        echo ""
+        echo "Deployment complete. Check the logs above for success/failure details."
     
     - name: Create Release
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
