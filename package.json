@@ -10,8 +10,13 @@
     "build-icons": "node cli/build-icons.js",
     "pack-data": "node cli/pack-data.js",
     "build-widget": "node cli/build-widget.js",
-    "build": "npm run fetch-jars && npm run extract-assets && npm run build-data && npm run build-icons && npm run pack-data && npm run build-widget",
+    "build:app": "rollup -c rollup.config.app.js",
+    "build": "npm run fetch-jars && npm run extract-assets && npm run build-data && npm run build-icons && npm run pack-data && npm run build:app",
     "build:widget-only": "npm run build-widget",
+    "dev": "npm run build-data && npm run build-icons && npm run pack-data && npm run serve",
+    "serve": "npx http-server -p 8080 -c-1",
+    "docker:build": "docker build -t minecraft-craft-widget .",
+    "docker:run": "docker run -p 8080:80 minecraft-craft-widget",
     "clean": "rm -rf .cache out dist"
   },
   "repository": {
@@ -48,6 +53,8 @@
     "adm-zip": "^0.5.10",
     "axios": "^1.6.5",
     "rollup": "^4.9.4",
-    "rollup-plugin-postcss": "^4.0.2"
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-copy": "^3.5.0",
+    "http-server": "^14.1.1"
   }
 }

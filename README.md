@@ -1,6 +1,6 @@
 # Minecraft Craft Widget
 
-A single-file, embeddable React widget that displays a searchable grid of Minecraft items/blocks with crafting recipes and usage information.
+A standalone React application that displays a searchable grid of Minecraft items/blocks with crafting recipes and usage information.
 
 ## Features
 
@@ -9,8 +9,7 @@ A single-file, embeddable React widget that displays a searchable grid of Minecr
 - View all crafting recipes for any item
 - Reverse-lookup to see what items can be crafted with a selected item
 - Lazy-loaded icons for performance
-- Single-file embed for easy WordPress integration
-- Automated CI/CD deployment to WordPress
+- Dockerized for easy deployment
 
 ## Quick Start
 
@@ -18,54 +17,59 @@ A single-file, embeddable React widget that displays a searchable grid of Minecr
 # Install dependencies
 npm install
 
-# Build the widget
+# Build everything (downloads MC data, builds app)
 npm run build
 
-# The output will be in dist/minecraft-craft-widget.min.js
+# The output will be in dist/
 ```
-
-## WordPress Integration
-
-### Manual Embed
-
-Add this to your WordPress post/page:
-
-```html
-<div id="mc-craft"></div>
-<script src="path/to/minecraft-craft-widget.min.js"></script>
-```
-
-### Automated Deployment
-
-This project includes GitHub Actions workflows for automatic deployment to WordPress. See [WordPress Deployment Guide](docs/WORDPRESS_DEPLOYMENT.md) for setup instructions.
 
 ## Development
 
 ```bash
-# Download Minecraft assets
-npm run fetch-jars
+# If you already have the data built
+npm run build:app
 
-# Extract recipes and textures
-npm run extract-assets
+# Serve locally
+npm run serve
 
-# Build data and icons
-npm run build-data
-npm run build-icons
-
-# Pack for production
-npm run pack-data
-
-# Build final widget
-npm run build-widget
+# Or use the dev script
+./serve-dev.sh
 ```
 
-## CI/CD
+Open http://localhost:8080 to view the app.
 
-Push to `main` branch automatically:
-1. Downloads Minecraft client jars
-2. Extracts and processes recipes
-3. Generates item icons
-4. Builds minified widget
-5. Deploys to WordPress via REST API
+## Docker
 
-See `.github/workflows/` for workflow details.
+```bash
+# Build Docker image
+docker build -t minecraft-craft-widget .
+
+# Run container
+docker run -p 8080:80 minecraft-craft-widget
+```
+
+## Build Process
+
+1. **Download Minecraft JARs**: Downloads client jars from Mojang
+2. **Extract Assets**: Extracts recipes, textures, and language files
+3. **Build Data**: Normalizes and processes all recipe data
+4. **Build Icons**: Creates 64×64 PNG icons from textures
+5. **Pack Data**: Compresses data for web delivery
+6. **Build App**: Bundles React app with Rollup
+
+## WordPress Integration
+
+After building, you can include the generated files in WordPress:
+- Copy `dist/` contents to your WordPress theme/plugin
+- Include the CSS and JS files in your page
+
+## File Structure
+
+```
+dist/
+├── index.html    # Main HTML file
+├── app.js        # Bundled React app
+├── app.css       # Styles
+├── data.min.json # Compressed recipe data
+└── icons/        # Item icons (965 files)
+```
