@@ -36,13 +36,26 @@ export function filterByVersion(items, version, allVersions) {
 }
 
 export function getRecipesForItem(recipes, itemId, currentVersion) {
+  console.log(`Looking for recipes for item: ${itemId}, total recipes: ${recipes.length}`);
+  
   return recipes.filter(recipe => {
     // Check if recipe produces this item
-    if (recipe.result && recipe.result.item === itemId) {
+    // Handle both packed (rs) and unpacked (result) formats
+    const result = recipe.result || recipe.rs;
+    
+    if (result && result.item === itemId) {
       // Check version compatibility
       if (currentVersion && recipe.versions) {
-        return recipe.versions.includes(currentVersion);
+        const isInVersion = Array.isArray(recipe.versions) 
+          ? recipe.versions.includes(currentVersion)
+          : recipe.versions === currentVersion;
+        
+        if (!isInVersion) {
+          console.log(`Recipe ${recipe.id} filtered out - not in version ${currentVersion}`);
+          return false;
+        }
       }
+      console.log(`Found recipe ${recipe.id} for ${itemId}`);
       return true;
     }
     return false;

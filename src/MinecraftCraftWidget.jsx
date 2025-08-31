@@ -3,6 +3,7 @@ import ItemGrid from './components/ItemGrid';
 import RecipeModal from './components/RecipeModal';
 import SearchBar from './components/SearchBar';
 import VersionSelector from './components/VersionSelector';
+import DebugPanel from './components/DebugPanel';
 import { searchItems, filterByVersion, getRecipesForItem, getUsesForItem } from './utils/dataUtils';
 import './styles.css';
 
@@ -11,10 +12,15 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
   const [selectedVersion, setSelectedVersion] = useState('latest');
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalTab, setModalTab] = useState('craft');
+  const [showDebug, setShowDebug] = useState(true); // Show debug by default
   
   // Unpack data
   const unpackedData = useMemo(() => {
     if (!data) return null;
+    
+    // Make data globally available for debugging
+    window.__MINECRAFT_DATA__ = data;
+    window.__DEBUG__ = true;
     
     // Unpack items
     const items = data.i.map(item => ({
@@ -94,9 +100,23 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
     setSelectedItem(null);
   }, []);
   
+  // Keyboard shortcut for debug panel
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setShowDebug(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+  
   const getItemRecipes = useCallback((itemId) => {
     if (!unpackedData) return [];
-    return getRecipesForItem(unpackedData.recipes, itemId, currentVersion);
+    const recipes = getRecipesForItem(unpackedData.recipes, itemId, currentVersion);
+    console.log(`Recipes for ${itemId}:`, recipes);
+    return recipes;
   }, [unpackedData, currentVersion]);
   
   const getItemUses = useCallback((itemId) => {
@@ -136,6 +156,16 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
           onClose={handleCloseModal}
           iconBaseUrl={iconBaseUrl}
           items={unpackedData.items}
+        />
+      )}
+      
+      {showDebug && (
+        <DebugPanel
+          data={unpackedData}
+          iconBaseUrl={iconBaseUrl}
+          selectedItem={selectedItem}
+          recipes={selectedItem ? getItemRecipes(selectedItem.id) : []}
+          uses={selectedItem ? getItemUses(selectedItem.id) : []}
         />
       )}
     </div>
