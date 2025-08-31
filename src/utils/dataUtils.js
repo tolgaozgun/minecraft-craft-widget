@@ -38,25 +38,45 @@ export function filterByVersion(items, version, allVersions) {
 export function getRecipesForItem(recipes, itemId, currentVersion) {
   console.log(`Looking for recipes for item: ${itemId}, total recipes: ${recipes.length}`);
   
+  // Log first few recipes to see structure
+  if (recipes.length > 0) {
+    console.log('Sample recipe structure:', recipes[0]);
+    console.log('Sample result:', recipes[0].result || recipes[0].rs);
+  }
+  
   return recipes.filter(recipe => {
     // Check if recipe produces this item
-    // Handle both packed (rs) and unpacked (result) formats
-    const result = recipe.result || recipe.rs;
+    const result = recipe.result;
     
-    if (result && result.item === itemId) {
-      // Check version compatibility
-      if (currentVersion && recipe.versions) {
-        const isInVersion = Array.isArray(recipe.versions) 
-          ? recipe.versions.includes(currentVersion)
-          : recipe.versions === currentVersion;
-        
-        if (!isInVersion) {
-          console.log(`Recipe ${recipe.id} filtered out - not in version ${currentVersion}`);
-          return false;
-        }
+    if (result) {
+      // Check if result.item matches our itemId
+      let matches = false;
+      
+      if (result.item === itemId) {
+        matches = true;
+      } else if (typeof result === 'string' && result === itemId) {
+        // Sometimes result might be a string directly
+        matches = true;
+      } else if (result.id === itemId) {
+        // Or it might use 'id' instead of 'item'
+        matches = true;
       }
-      console.log(`Found recipe ${recipe.id} for ${itemId}`);
-      return true;
+      
+      if (matches) {
+        // Check version compatibility
+        if (currentVersion && recipe.versions) {
+          const isInVersion = Array.isArray(recipe.versions) 
+            ? recipe.versions.includes(currentVersion)
+            : recipe.versions === currentVersion;
+          
+          if (!isInVersion) {
+            console.log(`Recipe ${recipe.id} filtered out - not in version ${currentVersion}`);
+            return false;
+          }
+        }
+        console.log(`Found recipe ${recipe.id} for ${itemId}, result:`, result);
+        return true;
+      }
     }
     return false;
   });

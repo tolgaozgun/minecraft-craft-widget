@@ -4,6 +4,9 @@ const DebugPanel = ({ data, iconBaseUrl, selectedItem, recipes, uses }) => {
   const [imageLoadStats, setImageLoadStats] = useState({ loaded: 0, failed: 0, total: 0 });
   const [expandedSections, setExpandedSections] = useState({});
   const [networkLog, setNetworkLog] = useState([]);
+  const [searchItemId, setSearchItemId] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [dataAnalysis, setDataAnalysis] = useState(null);
 
   useEffect(() => {
     // Override fetch to log requests
@@ -67,6 +70,127 @@ const DebugPanel = ({ data, iconBaseUrl, selectedItem, recipes, uses }) => {
       const url = `${iconBaseUrl}${item.icon}`;
       checkImageLoad(url);
     });
+  };
+
+  const searchRecipesForItem = () => {
+    if (!searchItemId || !data?.recipes) return;
+    
+    console.log(`Searching for recipes with item ID: ${searchItemId}`);
+    const results = {
+      asResult: [],
+      asIngredient: [],
+      inKey: [],
+      inGrid: [],
+      asBase: [],
+      asAddition: [],
+      asTemplate: []
+    };
+    
+    data.recipes.forEach((recipe, index) => {
+      // Check if item is the result
+      const result = recipe.result || recipe.rs;
+      if (result) {
+        if (result.item === searchItemId) {
+          results.asResult.push({ recipe, index, resultData: result });
+        } else if (typeof result === 'string' && result === searchItemId) {
+          results.asResult.push({ recipe, index, resultData: result });
+        }
+      }
+      
+      // Check in ingredients
+      if (recipe.ingredients || recipe.in) {
+        const ingredients = recipe.ingredients || recipe.in;
+        if (JSON.stringify(ingredients).includes(searchItemId)) {
+          results.asIngredient.push({ recipe, index });
+        }
+      }
+      
+      // Check in key (shaped recipes)
+      if (recipe.key || recipe.k) {
+        const key = recipe.key || recipe.k;
+        if (JSON.stringify(key).includes(searchItemId)) {
+          results.inKey.push({ recipe, index });
+        }
+      }
+      
+      // Check in grid
+      if (recipe.grid || recipe.g) {
+        const grid = recipe.grid || recipe.g;
+        if (JSON.stringify(grid).includes(searchItemId)) {
+          results.inGrid.push({ recipe, index });
+        }
+      }
+      
+      // Check smithing recipe fields
+      if ((recipe.base || recipe.b) === searchItemId) {
+        results.asBase.push({ recipe, index });
+      }
+      if ((recipe.addition || recipe.a) === searchItemId) {
+        results.asAddition.push({ recipe, index });
+      }
+      if ((recipe.template || recipe.tm) === searchItemId) {
+        results.asTemplate.push({ recipe, index });
+      }
+    });
+    
+    setSearchResults(results);
+    console.log('Search results:', results);
+  };
+  
+  const analyzeData = () => {
+    if (!data) return;
+    
+    const analysis = {
+      recipeTypes: {},
+      resultStructures: {},
+      itemsWithRecipes: new Set(),
+      itemsWithoutRecipes: [],
+      recipeFieldUsage: {},
+      versionDistribution: {}
+    };
+    
+    // Analyze recipes
+    data.recipes?.forEach(recipe => {
+      // Count recipe types
+      const type = recipe.type || recipe.t;
+      analysis.recipeTypes[type] = (analysis.recipeTypes[type] || 0) + 1;
+      
+      // Analyze result structure
+      const result = recipe.result || recipe.rs;
+      const resultType = result ? (typeof result === 'object' ? 'object' : 'string') : 'none';
+      analysis.resultStructures[resultType] = (analysis.resultStructures[resultType] || 0) + 1;
+      
+      // Track items with recipes
+      if (result?.item) {
+        analysis.itemsWithRecipes.add(result.item);
+      }
+      
+      // Track field usage
+      Object.keys(recipe).forEach(key => {
+        analysis.recipeFieldUsage[key] = (analysis.recipeFieldUsage[key] || 0) + 1;
+      });
+      
+      // Version distribution
+      const versions = recipe.versions || recipe.v;
+      if (versions) {
+        const versionStr = Array.isArray(versions) ? versions.join(',') : versions;
+        analysis.versionDistribution[versionStr] = (analysis.versionDistribution[versionStr] || 0) + 1;
+      }
+    });
+    
+    // Find items without recipes
+    data.items?.forEach(item => {
+      if (!analysis.itemsWithRecipes.has(item.id)) {
+        analysis.itemsWithoutRecipes.push(item.id);
+      }
+    });
+    
+    analysis.totalItems = data.items?.length || 0;
+    analysis.totalRecipes = data.recipes?.length || 0;
+    analysis.itemsWithRecipesCount = analysis.itemsWithRecipes.size;
+    
+    setDataAnalysis(analysis);
+    console.log('Data analysis:', analysis);
   };
 
   if (!data) {
@@ -239,6 +363,115 @@ const DebugPanel = ({ data, iconBaseUrl, selectedItem, recipes, uses }) => {
                 Recipe {recipe.id}: result = {JSON.stringify(recipe.result || recipe.rs)}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recipe Search */}
+      <div className="debug-section">
+        <h4 onClick={() => toggleSection('search')} style={{ cursor: 'pointer' }}>
+          🔍 Recipe Search {expandedSections.search ? '▼' : '▶'}
+        </h4>
+        {expandedSections.search && (
+          <div style={{ paddingLeft: '10px' }}>
+            <input 
+              type="text" 
+              value={searchItemId}
+              onChange={(e) => setSearchItemId(e.target.value)}
+              placeholder="Enter item ID (e.g., minecraft:oak_planks)"
+              style={{ 
+                width: '100%', 
+                padding: '5px', 
+                background: '#000', 
+                color: '#0f0', 
+                border: '1px solid #0f0',
+                marginBottom: '10px'
+              }}
+            />
+            <button 
+              onClick={searchRecipesForItem}
+              style={{ 
+                background: '#0f0', 
+                color: '#000', 
+                border: 'none', 
+                padding: '5px 10px',
+                cursor: 'pointer',
+                marginBottom: '10px'
+              }}
+            >
+              Search Recipes
+            </button>
+            
+            {searchResults && (
+              <div style={{ fontSize: '10px' }}>
+                <p style={{ color: '#ff0' }}>Results for: {searchItemId}</p>
+                <p>As Result: {searchResults.asResult.length} recipes</p>
+                {searchResults.asResult.slice(0, 3).map((res, i) => (
+                  <div key={i} style={{ marginLeft: '10px', marginBottom: '5px' }}>
+                    <p>Recipe: {res.recipe.id}</p>
+                    <p>Result: {JSON.stringify(res.resultData)}</p>
+                  </div>
+                ))}
+                <p>As Ingredient: {searchResults.asIngredient.length} recipes</p>
+                <p>In Key: {searchResults.inKey.length} recipes</p>
+                <p>In Grid: {searchResults.inGrid.length} recipes</p>
+                <p>As Base: {searchResults.asBase.length} recipes</p>
+                <p>As Addition: {searchResults.asAddition.length} recipes</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Data Analysis */}
+      <div className="debug-section">
+        <h4 onClick={() => toggleSection('analysis')} style={{ cursor: 'pointer' }}>
+          📊 Data Analysis {expandedSections.analysis ? '▼' : '▶'}
+        </h4>
+        {expandedSections.analysis && (
+          <div style={{ paddingLeft: '10px' }}>
+            <button 
+              onClick={analyzeData}
+              style={{ 
+                background: '#0f0', 
+                color: '#000', 
+                border: 'none', 
+                padding: '5px 10px',
+                cursor: 'pointer',
+                marginBottom: '10px'
+              }}
+            >
+              Analyze Data Structure
+            </button>
+            
+            {dataAnalysis && (
+              <div style={{ fontSize: '10px' }}>
+                <p>Total Items: {dataAnalysis.totalItems}</p>
+                <p>Total Recipes: {dataAnalysis.totalRecipes}</p>
+                <p>Items with Recipes: {dataAnalysis.itemsWithRecipesCount}</p>
+                <p>Items without Recipes: {dataAnalysis.itemsWithoutRecipes.length}</p>
+                
+                <h5>Recipe Types:</h5>
+                {Object.entries(dataAnalysis.recipeTypes).map(([type, count]) => (
+                  <p key={type} style={{ marginLeft: '10px' }}>{type}: {count}</p>
+                ))}
+                
+                <h5>Result Structures:</h5>
+                {Object.entries(dataAnalysis.resultStructures).map(([type, count]) => (
+                  <p key={type} style={{ marginLeft: '10px' }}>{type}: {count}</p>
+                ))}
+                
+                <h5>Recipe Fields:</h5>
+                {Object.entries(dataAnalysis.recipeFieldUsage).slice(0, 10).map(([field, count]) => (
+                  <p key={field} style={{ marginLeft: '10px' }}>{field}: {count}</p>
+                ))}
+                
+                <h5>Sample Items Without Recipes:</h5>
+                {dataAnalysis.itemsWithoutRecipes.slice(0, 10).map(id => (
+                  <p key={id} style={{ marginLeft: '10px', fontSize: '9px' }}>{id}</p>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
