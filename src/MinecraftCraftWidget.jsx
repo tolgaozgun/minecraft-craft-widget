@@ -39,7 +39,7 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
         id: recipe.id,
         type: expandRecipeType(recipe.t),
         result: recipe.rs,
-        versions: typeof recipe.v === 'string' ? parseVersionRange(recipe.v, data.v) : recipe.v
+        versions: recipe.v ? (typeof recipe.v === 'string' ? parseVersionRange(recipe.v, data.v) : recipe.v) : null
       };
       
       // Unpack recipe fields
