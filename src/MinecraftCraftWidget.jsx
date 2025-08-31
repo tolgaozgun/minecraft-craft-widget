@@ -16,11 +16,19 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
   
   // Unpack data
   const unpackedData = useMemo(() => {
+    console.log('Unpacking data, data exists:', !!data);
     if (!data) return null;
     
     // Make data globally available for debugging
     window.__MINECRAFT_DATA__ = data;
     window.__DEBUG__ = true;
+    
+    console.log('Raw data structure:', {
+      versions: data.v?.length,
+      items: data.i?.length,
+      recipes: data.r?.length,
+      uses: Object.keys(data.u || {}).length
+    });
     
     // Unpack items
     const items = data.i.map(item => ({
@@ -58,13 +66,24 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
       return unpacked;
     });
     
-    return {
+    const result = {
       versions: data.v,
       items,
       recipes,
       uses: data.u,
       icons: data.icons || {}
     };
+    
+    console.log('Unpacked data:', {
+      versions: result.versions.length,
+      items: result.items.length,
+      recipes: result.recipes.length,
+      sampleRecipe: result.recipes[0]
+    });
+    
+    window.__UNPACKED_DATA__ = result;
+    
+    return result;
   }, [data]);
   
   // Get current version
@@ -113,7 +132,12 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
   }, []);
   
   const getItemRecipes = useCallback((itemId) => {
-    if (!unpackedData) return [];
+    console.log(`getItemRecipes called for ${itemId}, unpackedData:`, unpackedData ? 'exists' : 'null');
+    if (!unpackedData) {
+      console.log('No unpacked data available');
+      return [];
+    }
+    console.log(`Calling getRecipesForItem with ${unpackedData.recipes.length} recipes`);
     const recipes = getRecipesForItem(unpackedData.recipes, itemId, currentVersion);
     console.log(`Recipes for ${itemId}:`, recipes);
     return recipes;
@@ -149,7 +173,12 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
       {selectedItem && (
         <RecipeModal
           item={selectedItem}
-          recipes={getItemRecipes(selectedItem.id)}
+          recipes={(() => {
+            console.log('RecipeModal: Getting recipes for', selectedItem.id);
+            const r = getItemRecipes(selectedItem.id);
+            console.log('RecipeModal: Got recipes:', r);
+            return r;
+          })()}
           uses={getItemUses(selectedItem.id)}
           activeTab={modalTab}
           onTabChange={setModalTab}
@@ -164,7 +193,12 @@ const MinecraftCraftWidget = ({ data, iconBaseUrl = 'icons/' }) => {
           data={unpackedData}
           iconBaseUrl={iconBaseUrl}
           selectedItem={selectedItem}
-          recipes={selectedItem ? getItemRecipes(selectedItem.id) : []}
+          recipes={selectedItem ? (() => {
+            console.log('DebugPanel: Getting recipes for', selectedItem.id);
+            const r = getItemRecipes(selectedItem.id);
+            console.log('DebugPanel: Got recipes:', r);
+            return r;
+          })() : []}
           uses={selectedItem ? getItemUses(selectedItem.id) : []}
         />
       )}
